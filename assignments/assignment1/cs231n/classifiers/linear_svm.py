@@ -37,13 +37,16 @@ def svm_loss_naive(W, X, y, reg):
             margin = scores[j] - correct_class_score + 1  # note delta = 1
             if margin > 0:
                 loss += margin
+                dW[:, j] += X[i]
+                dW[:, y[i]] -= X[i]
 
     # Right now the loss is a sum over all training examples, but we want it
     # to be an average instead so we divide by num_train.
     loss /= num_train
+    dW /= num_train
 
     # Add regularization to the loss.
-    loss += reg * np.sum(W * W)
+    loss += 0.5 * reg * np.sum(W * W)
 
     #############################################################################
     # TODO:                                                                     #
@@ -55,7 +58,7 @@ def svm_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dW += reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -78,7 +81,13 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = X.shape[0]
+    scores = X.dot(W)
+    correct_class_scores = scores[np.arange(num_train), y]
+    margins = np.maximum(0, scores - correct_class_scores[:, np.newaxis] + 1)
+    margins[np.arange(num_train), y] = 0
+    loss = np.sum(margins) / num_train
+    loss += 0.5 * reg * np.sum(W * W)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -93,7 +102,12 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    binary = margins
+    binary[margins > 0] = 1
+    row_sum = np.sum(binary, axis=1)
+    binary[np.arange(num_train), y] = -row_sum
+    dW = X.T.dot(binary) / num_train
+    dW += reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
